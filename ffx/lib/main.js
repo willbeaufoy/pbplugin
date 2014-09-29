@@ -17,15 +17,15 @@ var button = buttons.ActionButton({
 function handleClick(state) {
   worker = tabs.activeTab.attach({
     contentScriptFile: 
-      [self.data.url('jquery-1.11.1.min.js'), self.data.url('get_html.js')]
+      [self.data.url('jquery-1.11.1.min.js'), self.data.url('contentscript.js')]
   });
   worker.port.on('sendHTML', function(html) {
     // var uri = tabs.activeTab.url
     var uri = html;
     console.log(uri);
-    var query = 'http://localhost:12345';
+    //var query = 'http://pb.afnewsagency.org';
+    var query = 'http://localhost:14590';
     console.log(query);
-    // This is synchrous. I almost certainly want it to be asynchrous 
     var request = Request({
       url: query,
       content: html,

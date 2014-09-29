@@ -9,12 +9,6 @@ var db = new sqlite3.Database(file)
 http.createServer(function(request, response) {
   response.writeHead(200, {"Content-Type": "text/plain"});
 
-  // Get changes to be made and return them to client
-  //content = checkPb('Andrew White Flash', 'onComplete');
-  // var url_parts = url.parse(request.url, true);
-  // var query = url_parts.query;
-  // var html = query['body'];
-
   var html = '';
   request.on('data', function (chunk) {
     html += chunk;
@@ -23,12 +17,14 @@ http.createServer(function(request, response) {
     console.log(html);
     // Runs html received from client against database to look for matches
       var changes = {};
-      // Check each page in the database for matches in the text
+      // Check each page title in the database for matches in the provided html
       db.serialize(function() {
         db.each('select * from page', function(err, row) {
           console.log(row);
-          if(html.indexOf(row.title) != -1) {
-            var change = {title: row.title};
+          // Only count a match if the title is found in the page as a whole word
+          var regex = new RegExp('[^A-Za-z0-9]' + row.title + '[^A-Za-z0-9]');
+          if(regex.test(html)) {
+            var change = { title: row.title, link: row.link, excerpt: row.excerpt, word_count: row.word_count };
             changes[row.id] = change;
           }
         }, function() {
@@ -39,4 +35,4 @@ http.createServer(function(request, response) {
         });
       });
   });
-}).listen(12345);
+}).listen(14590);
