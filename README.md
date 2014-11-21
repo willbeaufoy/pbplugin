@@ -1,4 +1,4 @@
-Thin client version of Powerbase browser plugin. Ie. the database of powerbase info is kept on the server (updated periodically from powerbase.info api), and the plugin queries this database to get the info it needs.
+Powerbase browser plugin. Database of powerbase info is kept on the server (updated periodically from powerbase.info api), and the plugin queries this database to get the info it needs.
 
 Firefox plugin
 ==============
@@ -17,17 +17,6 @@ Python database creator
 =======================
 
 * Sends request/s to powerbase to get page title, link, excerpt and word count info and adds it to sqlite database. Script parameters determine how much info returned and how to treat existing data.
-
-TODO
-====
-
-Think about case sensitivity
-------------------------------
-
-* Powerbase urls are case sensitive, so http://powerbase.info/index.php/Kenneth_Newman works but http://powerbase.info/index.php/Kenneth_newman doesn't
-
-Allow user to highlight text and search for it in powerbase
------------------------------------------------------------
 
 Excerpt problems
 ----------------
@@ -48,8 +37,3 @@ e.g. http://powerbase.info/index.php/123_Pall_Mall
 ### <p> within table (so ignores 'no tables' rule)
 
 * http://powerbase.info/index.php/ACPO
-
-Other
------
-
-Are we adding one fewer than we should with each powerbase pass?
