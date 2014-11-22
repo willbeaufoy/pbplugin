@@ -37,8 +37,8 @@ function handleClick(state) {
     // var uri = tabs.activeTab.url
     var uri = html;
     //console.log(uri);
-    //var query = 'http://pb.afnewsagency.org';
-    var query = 'http://localhost:14590';
+    var query = 'http://pb.afnewsagency.org';
+    //var query = 'http://localhost:14590';
     //console.log(query);
     var request = Request({
       url: query,
