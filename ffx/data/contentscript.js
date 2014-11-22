@@ -1,8 +1,4 @@
 var html = document.body.innerHTML;
-var pbtitles = '';
-var ftcount = 0;
-var pattern = '';
-var repl = '';
 
 function getOffsetRect(elem) {
   // (1)
@@ -31,104 +27,37 @@ self.port.emit('sendHTML', html);
 self.port.on('updateHTML', function(changes) {
   if(changes) {
 
-    // Add style information for highlighted titles and popups
+    /* Add style information to document for highlighted titles and popups */
+
     var style = document.createElement('style');
     var css = ".pbtitle { background-color: yellow } .pbpopup { display:none; position:absolute; top:-20px; z-index:999; max-width:500px; background-color:#eee; padding:10px; border:1px solid #999; border-radius:5px; font-size:14px; font-weight:normal; color:#333; white-space: normal; font-family: 'Open-sans', sans-serif;} .pbpopop a, .pbpopup a:visited, .pbpopup a:link { color:#1a0dab; }";
 
     style.appendChild(document.createTextNode(css));
     document.head.appendChild(style);
 
-    // Function that goes through the document tree performing the find and replace on powerbase title keywords
+    /* For each found article title, add a popup to be shown when it is hovered over, and construct the necessary variables for the tree walk search and replace */
 
-    function highlightTitle(title, i) {
-      console.log('nativeTreeWalker called');
-      var walker = document.createTreeWalker(
-          document.body, 
-          NodeFilter.SHOW_TEXT, 
-          null, 
-          false
-      );
-
-      var node;
-      var textNodes = [];
-
-      while(node = walker.nextNode()) {
-        console.log('nextnode');
-          // Could possibly exclude things like scripts / style here
-
-          /* If the value of the text node matches the title and it is visible in the document, add it to the array */
-
-          if(node.nodeValue && pattern.test(node.nodeValue) && node.parentElement.offsetWidth != 0) {
-            console.log('node matches');
-            console.log(node);
-
-            var c = 'pbtitle' + i;
-            repl = "<span class='" + c + "'>" + title + "</span>";
-            textNodes.push(node);
-          }
-      }
-      console.log('doreplace');
-      var c = 'pbtitle' + 1;
-      repl = "<span class='" + c + "'>" + title + "</span>";
-
-      // For each found textnode replace it with an element containing the original text with the title keyword highlighted
-
-      textNodes.forEach(function(textNode) {
-        console.log(textNode);
-        var newSpan = document.createElement('span');
-        // But what if it occurs multi times?
-        var splitVal = textNode.nodeValue.split(title);
-        var tnBefore = document.createTextNode(splitVal[0]);
-        var tnAfter = document.createTextNode(splitVal[1]);
-        var highlight = document.createElement('span');
-        highlight.className = 'pbtitle';
-        highlight.textContent = title;
-        highlight.addEventListener('mouseenter', function(e) {
-          var rect = getOffsetRect(highlight);
-          console.log('highlightel coords: ' + rect.top + ', ' + rect.left);
-          // console.log(e);
-          // console.log(e.clientY);
-          // console.log(e.clientX);
-          var popup = document.getElementById('pbpopup' + i);
-          popup.style.position = 'absolute';
-          // popup.style.top = e.clientY + 'px';
-          // popup.style.left = e.clientX + 'px';
-          popup.style.top = rect.top + 'px';
-          popup.style.left = rect.left + 'px';
-          popup.style.display = 'block';
-        });
-        if(tnBefore) newSpan.appendChild(tnBefore);
-        newSpan.appendChild(highlight);
-        if(tnAfter) newSpan.appendChild(tnAfter);
-
-        textNode.parentNode.replaceChild(newSpan, textNode)
-      })
-      console.log('done');
-    }
-
-    var i = 1;
+    var titles = {};
+    var titlesRegex = '\\b';
 
     for(change in changes) {
+      var changeId = change;
       var title = changes[change].title;
       var link = changes[change].link;
       var excerpt = changes[change].excerpt;
       var word_count = changes[change].word_count;
 
-      pattern = new RegExp('\\b' + title + '\\b', 'g');
-        //var pattern = /\b + title + \b/g,
-      //repl = "<span class='pb pbtitle'>" + title + "</span>" + "<div class='pb pbpopup'><p><a href='" + link + "' target='_blank'>" + title + " Powerbase page</a></p><p>" + excerpt + "</p><p>" + word_count + " words</p></div>";
-
-      console.log('make change')
-      console.log(title)
-      console.log(link)
-      console.log(excerpt)
-      console.log(word_count)
-      console.log("\n")
+      // console.log('make change')
+      // console.log(title)
+      // console.log(link)
+      // console.log(excerpt)
+      // console.log(word_count)
+      // console.log("\n")
 
       /* Create the popup div (hidden by default) and append it to the body */
 
       var popup = document.createElement('div');
-      popup.id = 'pbpopup' + i;
+      popup.id = 'pbpopup' + changeId;
       popup.className = 'pbpopup';
 
       var link_p = document.createElement('p');
@@ -147,23 +76,115 @@ self.port.on('updateHTML', function(changes) {
       word_count_p.innerHTML = word_count + ' words';
       popup.appendChild(word_count_p);
 
-
       document.body.appendChild(popup);
 
       popup.addEventListener('mouseleave', function(e) {
-        console.log('mouseleave popup');
+        //console.log('mouseleave popup');
         //console.log(popup);
-        console.log(e);
-        console.log(e.target);
-        //var popup = document.getElementById('pbpopup' + i);
+        //console.log(e);
+        //console.log(e.target);
         e.target.style.display = 'none';
       });
 
-      highlightTitle(title, i);
-      console.log("findtitles finished. Moving to next change\n");
+      titles[title] = change;
+      titlesRegex += '(' + title + ')|';
 
-      i++;
-    };
-  };
+      // console.log("findtitles finished. Moving to next change\n");
+    }
+
+    /* Walk the DOM tree inserting highlight spans where titles are found */
+
+    var walker = document.createTreeWalker(
+        document.body, 
+        NodeFilter.SHOW_TEXT, 
+        null, 
+        false
+    );
+
+    var node;
+    var matchedNodes = [];
+    titlesRegex = '\\b' + titlesRegex.slice(0, - 1) + '\\b';
+
+    var pattern = new RegExp(titlesRegex, 'g');
+
+    while(node = walker.nextNode()) {
+      console.log('nextnode');
+        /* If the value of the text node matches the title and it is visible in the document, add it to the array */
+
+        if(node.nodeValue && node.parentElement.offsetWidth != 0 && pattern.test(node.nodeValue)) {
+          console.log('node matches');
+          //console.log(node);
+          var matchedNode = {};
+          matchedNode['node'] = node;
+          var matches = node.nodeValue.match(pattern);
+          matchedNode['matches'] = matches;
+          matchedNodes.push(matchedNode);
+        }
+    }
+    //console.log('doreplace');
+
+    /* For each found textnode replace it with an element containing the original text with the title keyword highlighted */
+
+    matchedNodes.forEach(function(matchedNode) {
+      // console.log('matchedNode:');
+      // console.log(matchedNode);
+      var newSpan = document.createElement('span');
+      // But what if it occurs multi times?
+      // var nodeText = matchedNode['node'].nodeValue.toString();
+      // console.log('nodeText:');
+      // console.log(nodeText);
+      // console.log(typeof nodeText);
+      var remainingText = matchedNode['node'].nodeValue;
+      for(var i = 0; i < matchedNode['matches'].length; i++) {
+        // Assume matchedNode['matches'] is in order they occur in string
+        var match = matchedNode['matches'][i];
+        var splitVal = [remainingText.split(match)[0], remainingText.split(match).slice(1).join(match)];
+        console.log(splitVal);
+        var before = '';
+        var after = '';
+        if(splitVal[0]) before = splitVal[0];
+        if(splitVal[1]) after = splitVal[1];
+        var highlight = document.createElement('span');
+        highlight.id = 'pbtitle' + titles[match];
+        highlight.className = 'pbtitle';
+        highlight.textContent = match;
+        highlight.addEventListener('mouseenter', function(e) {
+          // console.log(highlight);
+          // console.log(e.target);
+          var rect = getOffsetRect(e.target);
+          // console.log('highlighted coords: ' + rect.top + ', ' + rect.left);
+          // console.log(e);
+          // console.log(e.clientY);
+          // console.log(e.clientX);
+          var popup = document.getElementById('pbpopup' + e.target.id.replace('pbtitle', ''));
+          popup.style.position = 'absolute';
+          // popup.style.top = e.clientY + 'px';
+          // popup.style.left = e.clientX + 'px';
+          popup.style.top = rect.top + 'px';
+          popup.style.left = rect.left + 'px';
+          popup.style.display = 'block';
+        });
+        // console.log('tnBefore:');
+        // console.log(tnBefore);
+        // console.log('highlight:');
+        // console.log(highlight);
+        // console.log('tnAfter:');
+        // console.log(tnAfter);
+        if(before) {
+          newSpan.appendChild(document.createTextNode(before));
+        }
+        newSpan.appendChild(highlight);
+        remainingText = after;
+        // console.log(remainingText);
+        // console.log('remainingText');
+      }
+
+      // After node has been checked add the last bit
+
+      if(remainingText) newSpan.appendChild(document.createTextNode(remainingText))
+
+      matchedNode['node'].parentNode.replaceChild(newSpan, matchedNode['node']);
+    });
+  }
   self.port.emit('finishedUpdating');
 });
