@@ -24,7 +24,7 @@ function getOffsetRect(elem) {
 
 self.port.emit('sendHTML', html);
 
-self.port.on('updateHTML', function(result) {
+self.port.on('updateHTML', function(changes) {
   //if(changes && JSON.stringify(changes) != '{}') {
 
     /* Add style information to document for highlighted titles and popups */
@@ -42,10 +42,6 @@ self.port.on('updateHTML', function(result) {
 
     var titles = {};
     var titlesRegex = '\\b';
-
-    var changes = result['response'];
-    var walksplit = result['walksplit'];
-    console.log('Walksplit' + String(walksplit));
 
     for(change in changes) {
       var changeId = change;
@@ -99,12 +95,6 @@ self.port.on('updateHTML', function(result) {
       // console.log("findtitles finished. Moving to next change\n");
     }
 
-     var node;
-    var matchedNodes = [];
-    titlesRegex = '\\b' + titlesRegex.slice(0, - 1) + '\\b';
-
-    var pattern = new RegExp(titlesRegex, 'g');
-
     /* Walk the DOM tree inserting highlight spans where titles are found */
 
     var walker = document.createTreeWalker(
@@ -114,32 +104,31 @@ self.port.on('updateHTML', function(result) {
         false
     );
 
-   
+    var node;
+    var matchedNodes = [];
+    titlesRegex = '\\b' + titlesRegex.slice(0, - 1) + '\\b';
 
-    function findTitles() {
-      for(var i = 0; i < walksplit; i++) {
-        if(!(node = walker.nextNode())) {
-          matchedNodes.forEach(highlightMatch);
-          return;
-        }
+    var pattern = new RegExp(titlesRegex, 'g');
+
+    while(node = walker.nextNode()) {
+      console.log('nextnode');
+        /* If the value of the text node matches the title and it is visible in the document, add it to the array */
+
         if(node.nodeValue && node.parentElement.offsetWidth != 0 && pattern.test(node.nodeValue)) {
           console.log('node matches');
+          //console.log(node);
           var matchedNode = {};
           matchedNode['node'] = node;
           var matches = node.nodeValue.match(pattern);
           matchedNode['matches'] = matches;
           matchedNodes.push(matchedNode);
         }
-      }
-      console.log('For loop done')
-      setTimeout(findTitles, 0);
     }
-
-    findTitles();
+    //console.log('doreplace');
 
     /* For each found textnode replace it with an element containing the original text with the title keyword highlighted */
 
-    function highlightMatch(matchedNode, index, array) {
+    matchedNodes.forEach(function(matchedNode) {
       // console.log('matchedNode:');
       // console.log(matchedNode);
       var newSpan = document.createElement('span');
@@ -198,7 +187,7 @@ self.port.on('updateHTML', function(result) {
       if(remainingText) newSpan.appendChild(document.createTextNode(remainingText))
 
       matchedNode['node'].parentNode.replaceChild(newSpan, matchedNode['node']);
-    }
+    });
   //}
   self.port.emit('finishedUpdating');
 });

@@ -5,5 +5,21 @@
   "description": "Searches Powerbase database against current page. Highlights matches and provides info and links.",
   "author": "Will Beaufoy",
   "license": "MPL 2.0",
-  "version": "0.1"
+  "version": "0.3",
+  "icon": "data/icon-64.png",
+  "icon64": "data/icon-64.png",
+  "preferences": [{
+    "name": "autorun",
+    "title": "Autorun",
+    "description": "Run automatically on every page load",
+    "type": "bool",
+    "value": false
+  },
+  {
+    "name": "walksplit",
+    "title": "Walk split",
+    "description": "Number of nodes to traverse per loop pass",
+    "type": "integer",
+    "value": 1000
+  }]
 }

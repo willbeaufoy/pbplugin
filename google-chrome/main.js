@@ -1,10 +1,9 @@
 var buttons = require('sdk/ui/button/action');
 var toggleButtons = require('sdk/ui/button/toggle');
-var tabs = require("sdk/tabs");
+var tabs = chrome.tabs;
 var self = require("sdk/self");
 var Request = require("sdk/request").Request;
 var prefs = require('sdk/simple-prefs').prefs;
-var walksplit = prefs.walksplit;
 var autorun = prefs.autorun;
 console.log('autoruninitial: ' + String(autorun))
 //require("sdk/tabs").on("ready", logURL);
@@ -13,12 +12,6 @@ function onPrefChange(prefName) {
   autorun = prefs.autorun;
   console.log('autorunafterchange: ' + String(autorun))
 }
-
-function onWalksplitChange(prefName) {
-  walksplit = prefs.walksplit;
-}
-
-require("sdk/simple-prefs").on("walksplit", onWalksplitChange);
 
 require("sdk/simple-prefs").on("autorun", onPrefChange);
 
@@ -64,7 +57,7 @@ function searchPb() {
 
   worker = tabs.activeTab.attach({
     contentScriptFile: 
-      [self.data.url('contentscript.js')]
+      [self.data.url('jquery-1.11.1.min.js'), self.data.url('contentscript.js')]
   });
 
   worker.port.on('sendHTML', function(html) {
@@ -91,7 +84,7 @@ function searchPb() {
           stopSpinning();
         }
         else {
-          worker.port.emit('updateHTML', {'response': response.json, 'walksplit': walksplit});
+          worker.port.emit('updateHTML', response.json);
         }
       }
     }).post();

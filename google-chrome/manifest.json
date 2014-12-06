@@ -1,0 +1,25 @@
+{
+  "manifest_version": 2,
+
+  "name": "Powerbase",
+  "description": "Searches Powerbase database against current page. Highlights matches and provides info and links",
+  "version": "0.1",
+  "background": {
+    "persistent": false,
+    "scripts": ["main.js"]
+  },
+  "content_scripts": [
+    {
+      //"matches": ["http://www.google.com/*"],
+      //"css": ["mystyles.css"],
+      "js": ["contentscript.js"]
+    }
+  ],
+  "permissions": [
+    "http://pb.afnewsagency.org/"
+  ],
+  "browser_action": {
+    "default_icon": "powerbase-logo-19x19.png",
+    "default_popup": "popup.html"
+  }
+}
