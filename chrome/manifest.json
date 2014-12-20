@@ -1,0 +1,30 @@
+{
+  "manifest_version": 2,
+
+  "name": "Powerbase",
+  "description": "Searches Powerbase database against current page. Highlights matches and provides info and links",
+  "version": "0.1",
+  "icons": {"64": "powerbase-logo-64.png"},
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+  "content_scripts": [{
+    "matches": [ "http://*/*", "https://*/*" ],
+    "js": ["highlight-titles.js"]
+  }],
+  "options_page": "options.html",
+  "permissions": [
+    "tabs",
+    "storage",
+    "http://pb.afnewsagency.org/", "http://127.0.0.1:14590/"
+  ],
+  "browser_action": {
+    "default_icon": {
+      "19": "powerbase-logo-19.png",
+      "38": "powerbase-logo-38.png"
+    },
+    "default_popup": "popup.html"
+  },
+  "web_accessible_resources": ["powerbase-logo-64.png"]
+}
